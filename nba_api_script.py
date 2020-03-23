@@ -1,6 +1,7 @@
 from nba_api.stats.static import players
 from nba_api.stats.endpoints.playerdashboardbyshootingsplits import PlayerDashboardByShootingSplits
-from nba_api.stats.endpoints import playercareerstats
+from nba_api.stats.endpoints.playerdashptshotdefend import PlayerDashPtShotDefend
+from nba_api.stats.endpoints.playercareerstats import PlayerCareerStats
 import pandas as pd
 import time
 import random
@@ -19,7 +20,7 @@ def extractShootingData(threshold, type):
 			print(f"Fetching player {player_id}.")
 
 			# Get player's seasons
-			career = playercareerstats.PlayerCareerStats(player_id=player_id)
+			career = PlayerCareerStats(player_id=player_id)
 			seasons = pd.unique(career.get_data_frames()[0]['SEASON_ID'])
 
 			# Initialize empty dataframe
@@ -53,12 +54,6 @@ def extractShootingData(threshold, type):
 						else:
 							df = pd.concat([df, tbl], ignore_index=True)
 
-					# Generate random pause
-					'''
-					pause = random.randint(1, 3)
-					print(f"Season {season} done. Sleeping for {pause} second.")
-					time.sleep(pause)
-					'''
 					print(f"Stacking {season}.")
 
 			filename = f'player_dashboard_by_shooting_splits_{type}.csv'
@@ -67,13 +62,47 @@ def extractShootingData(threshold, type):
 				df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
 			else:
 				df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
-
-			# Generate random pause
-			'''
-			pause = random.randint(3, 5)
-			print(f"Player {player_id} done. Sleeping for {pause} second(s).")
-			time.sleep(pause)
-			'''
+				
 			print(f"Player {player_id} export completed.")
 
-extractShootingData(threshold=1497, type='shot_distance_5ft')
+def extractPlayerCareerStats(threshold, df_list):
+
+	for player_id in player_id_list:
+
+		if player_id > threshold:
+
+			print(f"Fetching player {player_id}.")
+			# Find player career stats
+			career = PlayerCareerStats(player_id=player_id, per_mode36='PerGame')
+			career_data = career.get_data_frames()
+
+			if 'regular' in df_list:
+				df = career_data[0]
+				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
+				filename = 'career_totals_regular_season.csv'
+				if os.path.isfile(filename):
+					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
+				else:
+					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
+
+			if 'post' in df_list:
+				df = career_data[2]
+				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
+				filename = 'career_totals_post_season.csv'
+				if os.path.isfile(filename):
+					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
+				else:
+					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
+
+			if 'allstar' in df_list:
+				df = career_data[4]
+				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
+				filename = 'career_totals_all_star_season.csv'
+				if os.path.isfile(filename):
+					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
+				else:
+					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
+
+
+#extractShootingData(threshold=55, type='shot_distance_8ft')
+extractPlayerCareerStats(threshold=0, df_list=['regular', 'post', 'allstar'])
