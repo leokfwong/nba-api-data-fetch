@@ -66,43 +66,33 @@ def extractShootingData(threshold, type):
 			print(f"Player {player_id} export completed.")
 
 def extractPlayerCareerStats(threshold, df_list):
-
+	# Iterate through each player 
 	for player_id in player_id_list:
-
+		# Subset players based on their player_id
 		if player_id > threshold:
-
-			print(f"Fetching player {player_id}.")
 			# Find player career stats
+			print(f"Fetching player {player_id}.")
 			career = PlayerCareerStats(player_id=player_id, per_mode36='PerGame')
 			career_data = career.get_data_frames()
-
-			if 'regular' in df_list:
-				df = career_data[0]
-				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
-				filename = 'career_totals_regular_season.csv'
-				if os.path.isfile(filename):
-					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
-				else:
-					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
-
-			if 'post' in df_list:
-				df = career_data[2]
-				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
-				filename = 'career_totals_post_season.csv'
-				if os.path.isfile(filename):
-					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
-				else:
-					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
-
-			if 'allstar' in df_list:
-				df = career_data[4]
-				df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
-				filename = 'career_totals_all_star_season.csv'
-				if os.path.isfile(filename):
-					df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
-				else:
-					df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
-
+			# Initialize tables dictionary
+			tbl_dict = [
+				{'type': 'regular', 'filename': 'regular_season', 'index': 0},
+				{'type': 'post', 'filename': 'post_season', 'index': 2},
+				{'type': 'allstar', 'filename': 'all_star_season', 'index': 4}
+			]
+			# Iterate through each table
+			for tbl in tbl_dict:
+				# If table is among list of tables to export
+				if tbl['type'] in df_list:
+					# Fetch table by index and generate file name
+					df = career_data[tbl['index']]
+					df['SEASON_ID'] = df['SEASON_ID'].astype(str).str[:4]
+					filename = f"career_totals_{tbl['filename']}.csv"
+					# Export data to file
+					if os.path.isfile(filename):
+						df.to_csv(filename, mode='a', encoding='utf-8', index=False, header=False)
+					else:
+						df.to_csv(filename, mode='w', encoding='utf-8', index=False, header=True)
 
 #extractShootingData(threshold=55, type='shot_distance_8ft')
 extractPlayerCareerStats(threshold=0, df_list=['regular', 'post', 'allstar'])
